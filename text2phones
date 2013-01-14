@@ -1,0 +1,14 @@
+#!/bin/sh
+"true" ; exec /home/local/HUMANOIDS/berry/src/festival/festival/bin/festival --script $0 $*
+
+(load (path-append libdir "init.scm"))
+(voice_pc_diphone)
+
+(define (get-phones utt)
+  (utt.save.segs utt "segs.txt")
+)
+
+(set! tts_hooks (list utt.synth get-phones))
+(gc-status nil)
+(tts_file "-")
+
