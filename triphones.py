@@ -3,6 +3,9 @@ import sys
 import operator
 import math
 import pylab
+import os
+import cPickle as pickle
+from guppy import hpy
 
 def makeSentenceList(filename, startID=0):
     '''creates a list of sentences that contains:
@@ -186,5 +189,68 @@ def selectBestSubset(nsentences, sentences, total, tridict):
 
     return selected, selected_inds, master_count
 
+def getTotals():
+    '''The transcriptions can be done in chunks to enable parallelism. 
+    This function combines the parts to get the total triphone count, assuming that 
+    transcribed files have been saved as trans001.txt, trans002.txt, etc.
+    '''
+    total = {}
+    files = sorted(os.listdir('.'))
+    trans = []
+    for i in files:
+        if i[:5] == 'trans' and i[-3:] == 'txt':
+            trans.append(i)
+    ID = 0
+    h = hpy()
+    for i in range(6):
+        print h.heap()
+        sents, tot = makeSentenceList(trans[i], ID)
+        ID = int(sents[-1][0])+1
+        for k,v in tot.items():
+            if total.has_key(k):
+                total[k] += v
+            else:
+                total[k] = v
+        del sents
+        del tot
+    return total
 
+def demo(filename):
+    '''This function shows how all the other functions work together
+    filename input is a txt file with transcriptions
+    '''
+    # sentences contains ID, original line number, orthography, phones list, and 
+    # triphones list for each sentence in the input file
+    # total contains triphone counts for every triphone in the input
+    sentences, total = makeSentenceList(filename)
+
+    # tridict: keys are triphones, values are lists of IDs of sentences with that triphone
+    if os.path.isfile('tridict1.pkl'):
+        tridict = pickle.load(file('tridict1.pkl','rb'))
+    else:
+        tridict = makeTriphoneDict(sentences, total)
+
+    # at this point we can get a better set of triphone counts using more data
+    if os.path.isfile('counts1-6.pkl'):
+        total = pickle.load(file('counts1-6.pkl', 'rb'))
+    else:
+        total = getTotals()
+
+    # score the sentences - the scores are added to the sentences list
+    # ranked is basically useless unless we want to do the plots
+    # more sentences could be added to the sentences list, but memory becomes an issue
+    ranked = scoreSentences(sentences, total)
+
+    # create the rank plots
+    rankPlots(total, ranked)
+
+    # pick a subset
+    selected, inds, counts = selectBestSubset(100, sentences, total, tridict)
+    f = codecs.open('selected.txt', 'w', 'latin1')
+    for i in selected:
+        f.write(i[2]+'\n')
+    f.close()
+
+if __name__ == "__main__":
+    demo(sys.argv[1])
 
