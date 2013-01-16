@@ -6,6 +6,8 @@ import pylab
 import os
 import cPickle as pickle
 from guppy import hpy
+from apiclient.discovery import build
+
 
 def makeSentenceList(filename, startID=0):
     '''creates a list of sentences that contains:
@@ -190,6 +192,17 @@ def selectBestSubset(nsentences, sentences, total, tridict):
 
     return selected, selected_inds, master_count
 
+def checkLanguage(sentence, apikey):
+    '''Uses the google translate api to detect the language of the candidate sentence
+    Requires an active google api key ($)
+    '''
+    service = build('translate', 'v2', developerKey=apikey)
+    response = service.detections().list(q=[sentence]).execute()
+    lang = response['detections'][0][0]['language']
+    conf = response['detections'][0][0]['confidence']
+    return lang, conf
+
+
 def getTotals():
     '''The transcriptions can be done in chunks to enable parallelism. 
     This function combines the parts to get the total triphone count, assuming that 
@@ -215,6 +228,18 @@ def getTotals():
         del sents
         del tot
     return total
+
+def findIndex(n):
+    '''This function finds the ID number of the first sentence in chunk n of the 
+    transcription files, For example looking for the ID of the first sentence in
+    trans3.txt
+    '''
+    ID = 0
+    for i in range(1, n):
+        f = codecs.open('trans%d.txt'%i, 'r','latin1').readlines()
+        nsents = len(f)/2
+        ID += nsents
+    return ID
 
 def demo(filename):
     '''This function shows how all the other functions work together
