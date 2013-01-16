@@ -106,7 +106,7 @@ def scoreSentences(sentences, total):
     ranked = sorted(sentences, key=operator.itemgetter(-1), reverse=True)
     return ranked
 
-def rankPlots(total, ranked_scores):
+def rankPlots(total, ranked_scores=None):
     ranked_triphones = sortDict(total)
     rank = range(1,len(ranked_triphones)+1)
     count = []
@@ -121,16 +121,17 @@ def rankPlots(total, ranked_scores):
     pylab.title('Triphone occurances vs. rank')
     pylab.savefig('triphone_ranks.jpg')
     
-    rank = range(1,len(ranked_scores)+1)
-    count = []
-    for i in range(len(ranked_scores)):
-        count.append(ranked_scores[i][-1])
-    pylab.figure('scoreRank')
-    pylab.plot(rank,count, '-')
-    pylab.ylabel('Score')
-    pylab.xlabel('Rank')
-    pylab.title('Sentence score vs. rank')
-    pylab.savefig('score_ranks.jpg')
+    if ranked_scores is not None:
+        rank = range(1,len(ranked_scores)+1)
+        count = []
+        for i in range(len(ranked_scores)):
+            count.append(ranked_scores[i][-1])
+        pylab.figure('scoreRank')
+        pylab.plot(rank,count, '-')
+        pylab.ylabel('Score')
+        pylab.xlabel('Rank')
+        pylab.title('Sentence score vs. rank')
+        pylab.savefig('score_ranks.jpg')
 
 def getScores(IDs, sentences):
     '''returns scores for each ID in the the input list'''
@@ -202,7 +203,7 @@ def getTotals():
             trans.append(i)
     ID = 0
     h = hpy()
-    for i in range(6):
+    for i in range(7):
         print h.heap()
         sents, tot = makeSentenceList(trans[i], ID)
         ID = int(sents[-1][0])+1
@@ -252,5 +253,8 @@ def demo(filename):
     f.close()
 
 if __name__ == "__main__":
-    demo(sys.argv[1])
+    #demo(sys.argv[1])
+    total = getTotals()
+    pickle.dump(total, file('counts1-7.pkl','wb'))
+
 
