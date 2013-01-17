@@ -7,7 +7,7 @@ import os
 import cPickle as pickle
 from guppy import hpy
 from apiclient.discovery import build
-
+import time
 
 def makeSentenceList(filename, startID=0):
     '''creates a list of sentences that contains:
@@ -145,7 +145,7 @@ def getScores(IDs, sentences):
     scores = sorted(scores, key=operator.itemgetter(1), reverse=True)
     return scores
 
-def selectBestSubset(nsentences, sentences, total, tridict):
+def selectBestSubset(nsentences, sentences, total, tridict, apikey=None):
     '''Selects the best nsentences from the set of sentences.
     "Best" in terms of phonetic density
     Proceedure:
@@ -165,7 +165,11 @@ def selectBestSubset(nsentences, sentences, total, tridict):
         master_count[ranked_triphones[i][0]] = 0
     selected = []
     selected_inds = []
+    indfile = open('used_inds.csv','w')
+    selfile = codecs.open('selected.txt', 'w', 'latin1')
     for i in range(nsentences):
+        sys.stdout.write('\rfound %d of %d sentences'%(i, nsentences))
+        sys.stdout.flush()
         # find first unused triphone
         nokey = True
         j = 0
@@ -180,22 +184,39 @@ def selectBestSubset(nsentences, sentences, total, tridict):
                     ind = scores[l][0]
                     if ind not in selected_inds:
                         selected_inds.append(ind)
-                        selected.append(sentences[ind])
-                        nosent = False
-                        nokey = False
+                        # check that it is Italian
+                        if apikey is not None:
+                            st = sentences[ind][2]
+                            if ':' in st:
+                                st = st.split(':')[-1]
+                            if len(st) <= 150:
+                                lang, conf = checkLanguage(st,apikey)
+                                indfile.write("%d,%s,%f\n"%(ind,lang,conf))
+                                if lang == 'it':
+                                    selfile.write(st+'\n')
+                                    selected.append(sentences[ind])
+                                    nosent = False
+                                    nokey = False
+                        else: # if there is no apikey, just add regardless of lang
+                            selected.append(sentences[ind])
+                            nosent = False
+                            nokey = False
                     l += 1
             j += 1
         #update master_count
         sel_tris = selected[-1][4].items()
         for t,c in sel_tris:
-            master_count[t] += c
-
+            master_count[t] += c         
+    sys.stdout.write('\n')
+    selfile.close()
+    indfile.close()
     return selected, selected_inds, master_count
 
 def checkLanguage(sentence, apikey):
     '''Uses the google translate api to detect the language of the candidate sentence
     Requires an active google api key ($)
     '''
+    time.sleep(1) # google sets user rate limit that is easily exceeded
     service = build('translate', 'v2', developerKey=apikey)
     response = service.detections().list(q=[sentence]).execute()
     lang = response['detections'][0][0]['language']
@@ -257,8 +278,8 @@ def demo(filename):
         tridict = makeTriphoneDict(sentences, total)
 
     # at this point we can get a better set of triphone counts using more data
-    if os.path.isfile('counts1-6.pkl'):
-        total = pickle.load(file('counts1-6.pkl', 'rb'))
+    if os.path.isfile('counts1-7.pkl'):
+        total = pickle.load(file('counts1-7.pkl', 'rb'))
     else:
         total = getTotals()
 
