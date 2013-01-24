@@ -8,6 +8,7 @@ import cPickle as pickle
 from guppy import hpy
 from apiclient.discovery import build
 import time
+import numpy as np
 
 def makeSentenceList(filename, startID=0):
     '''creates a list of sentences that contains:
@@ -261,6 +262,45 @@ def findIndex(n):
         nsents = len(f)/2
         ID += nsents
     return ID
+
+def randomSample(n, sentences, total, apikey=None):
+    '''This function randomly samples n sentences comparible to those which are
+    chosen by selectBestSubset, in order to compare the distributions of the results
+    '''
+    inds = np.arange(len(sentences))
+    np.random.shuffle(inds)
+    selected = []
+    ranked_triphones = sortDict(total)
+    master_count = {}
+    for i in range(len(ranked_triphones)):
+        master_count[ranked_triphones[i][0]] = 0
+    nsents = 0
+    current = 0
+    while nsents < n:
+        sys.stdout.write('\rfound %d of %d sentences'%(nsents, n))
+        sys.stdout.flush()
+        foundSent = False
+        while not foundSent:
+            st = sentences[inds[current]][2]
+            if ':' in st:
+                st = st.split(':')[-1]
+            if len(st) <= 150:
+                if apikey is not None:
+                    lang, conf = checkLanguage(st, apikey)
+                    if lang == 'it':
+                        selected.append(sentences[inds[current]])
+                        foundSent = True
+                        nsents += 1
+                else:
+                    selected.append(sentences[inds[current]])
+                    foundSent = True
+                    nsents += 1
+            current += 1
+        sel_tris = selected[-1][4].items()
+        for t,c in sel_tris:
+            master_count[t] += c         
+    sys.stdout.write("\n")
+    return selected, master_count
 
 def demo(filename):
     '''This function shows how all the other functions work together
