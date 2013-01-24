@@ -1,5 +1,5 @@
 #!/bin/sh
-"true" ; exec /home/local/HUMANOIDS/berry/src/festival/festival/bin/festival --script $0 $*
+"true" ; exec festival --script $0 $*
 
 (load (path-append libdir "init.scm"))
 (voice_pc_diphone)
