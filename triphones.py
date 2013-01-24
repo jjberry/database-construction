@@ -193,7 +193,7 @@ def selectBestSubset(nsentences, sentences, total, tridict, apikey=None):
                                 lang, conf = checkLanguage(st,apikey)
                                 indfile.write("%d,%s,%f\n"%(ind,lang,conf))
                                 if lang == 'it':
-                                    selfile.write(st+'\n')
+                                    selfile.write('%d %s\n'%(ind,st))
                                     selected.append(sentences[ind])
                                     nosent = False
                                     nokey = False
