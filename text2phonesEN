@@ -1,0 +1,13 @@
+#!/bin/sh
+"true" ; exec festival --script $0 $*
+
+(load (path-append libdir "init.scm"))
+
+(define (get-phones utt)
+  (utt.save.segs utt "segs.txt")
+)
+
+(set! tts_hooks (list utt.synth get-phones))
+(gc-status nil)
+(tts_file "-")
+
