@@ -1,6 +1,16 @@
 import os
 import subprocess
 
+def clean_timit():
+    '''cleans the timit selection sentence list available in NLTK
+    '''
+    corpus_dir = 'English/timit'
+    f = open(os.path.join(corpus_dir, 'allsenlist.txt'), 'r').readlines()
+    sents = open('timit.txt','w')
+    for i in range(len(f)):
+        sents.write(f[i].split('\t')[-1])
+    sents.close()
+
 def clean_sentences():
     '''cleans the annotations from the Brown corpus available from NLTK and saves
     the output to brown.txt. The contents of brown.zip should be in the directory 
@@ -24,8 +34,8 @@ def clean_sentences():
                     sents.write(s.strip()+'\n')
 
 def transcribe():
-    f = open('brown.txt', 'r').readlines()
-    out = open('brown_trans.txt', 'w')
+    f = open('timit.txt', 'r').readlines()
+    out = open('timit_trans.txt', 'w')
     t = len(f)
     for i in range(len(f)):
         if i % 10 == 0:

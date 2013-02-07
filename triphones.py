@@ -302,6 +302,41 @@ def randomSample(n, sentences, total, apikey=None):
     sys.stdout.write("\n")
     return selected, master_count
 
+def compareEnglish():
+    '''This function uses the brown and timit sentences from NLTK to compare the 
+    distributions of a hand-crafted corpus (timit) to the automatically generated
+    one made with selectBestSubset
+    This depends on the files 'brown_trans.txt' and 'timit_trans.txt' created with
+    transcribe_brown_nltk.py
+    '''
+    sents1, total = makeSentenceList('brown_trans.txt',0)
+    selected, total2 = makeSentenceList('timit_trans.txt',len(sents1))
+    for k,v in total2.items():
+        if total.has_key(k):
+            total[k] += v
+        else:
+            total[k] = v
+    ranked_triphones = sortDict(total)
+    rank = range(1,len(ranked_triphones)+1)
+    count = []
+    selcount = []
+    for i in range(len(ranked_triphones)):
+        count.append(ranked_triphones[i][1])
+        if total2.has_key(ranked_triphones[i][0]):
+            selcount.append(total2[ranked_triphones[i][0]])
+        else:
+            selcount.append(0)
+    fig = pylab.figure('triphoneRank')
+    ax = fig.add_subplot(111)
+    pylab.plot(rank, count, 'b-')
+    pylab.plot(rank, selcount, 'g-')
+    ax.set_yscale('log')
+    pylab.ylabel('(log) Occurrences')
+    pylab.xlabel('Rank')
+    pylab.title('Triphone occurrences vs. rank (Brown/Timit)')
+    pylab.savefig('timit_ranks.jpg')
+    
+
 def demo(filename):
     '''This function shows how all the other functions work together
     filename input is a txt file with transcriptions
