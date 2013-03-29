@@ -119,16 +119,24 @@ def rankPlots(total, ranked_scores=None):
     ax = fig.add_subplot(111)
     pylab.plot(rank, count, '-')
     ax.set_yscale('log')
-    pylab.ylabel('(log) Occurances')
+    pylab.ylabel('(log) Occurrences')
     pylab.xlabel('Rank')
-    pylab.title('Triphone occurances vs. rank')
+    pylab.title('Triphone occurrences vs. rank')
     pylab.savefig('triphone_ranks.jpg')
-    
+
+    fig2 = pylab.figure('scores')
+    ax = fig2.add_subplot(111)
+    count = []
+    for i in range(len(ranked_scores)):
+        count.append(ranked_scores[i][-1])
+    n, bins, patches = ax.hist(count, 50, normed=1, facecolor='gray', alpha=0.85)
+    ax.set_xlabel('Score')
+    ax.set_ylabel('Probability')
+    ax.set_title('Distribution of scores')
+    pylab.savefig('score_dist.jpg')
+
     if ranked_scores is not None:
         rank = range(1,len(ranked_scores)+1)
-        count = []
-        for i in range(len(ranked_scores)):
-            count.append(ranked_scores[i][-1])
         pylab.figure('scoreRank')
         pylab.plot(rank,count, '-')
         pylab.ylabel('Score')
@@ -310,7 +318,7 @@ def compareEnglish():
     transcribe_brown_nltk.py
     '''
     sents1, total = makeSentenceList('brown_trans.txt',0)
-    selected, total2 = makeSentenceList('timit_trans.txt',len(sents1))
+    selected, total2 = makeSentenceList('harvard_trans.txt',len(sents1))
     for k,v in total2.items():
         if total.has_key(k):
             total[k] += v
@@ -333,9 +341,57 @@ def compareEnglish():
     ax.set_yscale('log')
     pylab.ylabel('(log) Occurrences')
     pylab.xlabel('Rank')
-    pylab.title('Triphone occurrences vs. rank (Brown/Timit)')
-    pylab.savefig('timit_ranks.jpg')
-    
+    pylab.title('Triphone occurrences vs. rank (Brown/Harvard)')
+    pylab.savefig('harvard_ranks.jpg')
+   
+def makeResultsPlot(total, selected_total, outname):   
+    ranked_triphones = sortDict(total)
+    rank = range(1,len(ranked_triphones)+1)
+    count = []
+    selcount = []
+    for i in range(len(ranked_triphones)):
+        count.append(ranked_triphones[i][1])
+        if selected_total.has_key(ranked_triphones[i][0]):
+            selcount.append(selected_total[ranked_triphones[i][0]])
+        else:
+            selcount.append(0)
+    fig = pylab.figure('triphoneRank')
+    ax = fig.add_subplot(111)
+    pylab.plot(rank, count, 'b-')
+    pylab.plot(rank, selcount, 'g-')
+    ax.set_yscale('log')
+    pylab.ylabel('(log) Occurrences')
+    pylab.xlabel('Rank')
+    pylab.title('Triphone occurrences vs. rank')
+    pylab.savefig(outname)
+
+def threshold(selected, total, thresh):
+    '''Checks to see if each sentence in selected has triphones that occur less
+    than 'thresh' times in the corpus (total). Returns sentences that do not have 
+    triphones below threshold.
+    '''
+    valid = []
+    for i in range(len(selected)):
+        passed = True
+        tris = selected[i][4].items()
+        for k,v in tris:
+            if total[k] < thresh:
+                passed = False
+                break
+        if passed:
+            valid.append(selected[i])
+    return valid
+
+def countTriphones(selected):
+    counts = {}
+    for i in range(len(selected)):
+        item_list = selected[i][4].items()
+        for k,v in item_list:
+            if counts.has_key(k):
+                counts[k] += v
+            else:
+                counts[k] = v
+    return counts
 
 def demo(filename):
     '''This function shows how all the other functions work together
@@ -367,15 +423,15 @@ def demo(filename):
     rankPlots(total, ranked)
 
     # pick a subset
-    selected, inds, counts = selectBestSubset(100, sentences, total, tridict)
-    f = codecs.open('selected.txt', 'w', 'latin1')
-    for i in selected:
-        f.write(i[2]+'\n')
-    f.close()
+    #selected, inds, counts = selectBestSubset(100, sentences, total, tridict)
+    #f = codecs.open('selected.txt', 'w', 'latin1')
+    #for i in selected:
+    #    f.write(i[2]+'\n')
+    #f.close()
 
 if __name__ == "__main__":
     #demo(sys.argv[1])
-    total = getTotals()
-    pickle.dump(total, file('counts1-7.pkl','wb'))
-
+    #total = getTotals()
+    #pickle.dump(total, file('counts1-7.pkl','wb'))
+    compareEnglish()
 
