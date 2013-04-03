@@ -429,9 +429,29 @@ def demo(filename):
     #    f.write(i[2]+'\n')
     #f.close()
 
+def demo_lit_corpus(nsent=1800, thresh=9):
+    sentences, total = makeSentenceList('all_trans.txt')
+    if os.path.isfile('litcorpus_tridict.pkl'):
+        tridict = pickle.load(file('litcorpus_tridict.pkl','rb'))
+    else:
+        tridict = makeTriphoneDict(sentences, total)
+    ranked = scoreSentences(sentences, total)
+    selected, inds, counts = selectBestSubset(nsent, sentences, total, tridict)
+    valid = threshold(selected, total, thresh)
+
+    #write out the orthography and transcriptions to a tsv file
+    o = codecs.open('lit_corpus_candidates.tsv', 'w', 'latin1')
+    for i in range(len(valid)):
+        o.write("%s\t%s\t%s\n" %(valid[i][0], valid[i][2], '-'.join(valid[i][3])))
+    o.close()
+
 if __name__ == "__main__":
     #demo(sys.argv[1])
     #total = getTotals()
     #pickle.dump(total, file('counts1-7.pkl','wb'))
-    compareEnglish()
+    #compareEnglish()
+    if len(sys.argv) == 1:
+        demo_lit_corpus()
+    else:
+        demo_lit_corpus(int(sys.argv[1]), int(sys.argv[2]))
 
