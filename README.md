@@ -22,3 +22,9 @@ transcriptions and picking a subset of sentences for best phonetic coverage.
 Optionally uses the Google Translate API for language verification, since PAISA
 contains some sentences in other languages, mostly English.
 
+Also included are transcribebrownnltk.py and text2phonesEN for testing the 
+algorithm on English data sets.
+
+The file all_trans.tar.gz is a sample database of Italian sentences taken from
+classic novels. Included in the triphones.py script is a demo that makes use of 
+this database. To run the demo, first uncompress the file.
